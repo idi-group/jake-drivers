@@ -1,0 +1,12 @@
+&EN
+#{"pyjake"},(0xA00015E7),1,0,0, TYPE=SA
+%{"Vendor-EN"}
+:"Vendor"
+[0x101F7961], 0, 0, 0, {"S60ProductID"}
+"pyjake.py"-"c:\resource\pyjake.py"
+"pyjake_packets.py"-"c:\resource\pyjake_packets.py"
+"pyjake_serial.py"-"c:\resource\pyjake_serial.py"
+"pyjake_constants.py"-"c:\resource\pyjake_constants.py"
+"jakeloggers60.py"-"!:\python\jakeloggers60.py"
+"pyjake_test_s60.py"-"!:\python\pyjake_test_s60.py"
+
