@@ -143,7 +143,7 @@ class jake_device:
 		if result == JAKE_ERROR:
 			return (result, value)
 
-		return (result, value & 0x7F)
+		return (result, value & 0x07)
 	
 	def write_sample_rate(self, newrate):
 		if newrate < JAKE_SAMPLE_RATE_0 or newrate > JAKE_SAMPLE_RATE_120:
