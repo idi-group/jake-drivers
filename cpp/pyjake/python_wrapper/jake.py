@@ -98,16 +98,6 @@ JAKE_ERROR = -1
 	JAKE_REG_SERIAL_MSB 
 ] = range(44)
 
-# possible output rates
-[
-	JAKE_SAMPLE_RATE_0,
-	JAKE_SAMPLE_RATE_7_5,
-	JAKE_SAMPLE_RATE_15,
-	JAKE_SAMPLE_RATE_30,
-	JAKE_SAMPLE_RATE_60,
-	JAKE_SAMPLE_RATE_120
-] = range(6)
-
 # bits in main config register
 [
 	JAKE_ACCEL,
