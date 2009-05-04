@@ -1300,13 +1300,14 @@ JAKE_API int jake_read_sample_rate(jake_device* dev, unsigned char* current_rate
 	if(jake_read_main(dev, JAKE_REG_CONFIG1, &tmp) != JAKE_SUCCESS)
 		return JAKE_ERROR;
 
-	*current_rate = tmp & 0x06; // only lower 3 bits
+	*current_rate = tmp & 0x07; // only lower 3 bits
 	return JAKE_SUCCESS;
 }
 
 JAKE_API int jake_write_sample_rate(jake_device* dev, int new_rate) {
 	if(dev == NULL)
 		return JAKE_ERROR;
+
 
 	if(new_rate < JAKE_SAMPLE_RATE_0 || new_rate > JAKE_SAMPLE_RATE_120) {
 		// work out best matching sample rate
@@ -1326,6 +1327,5 @@ JAKE_API int jake_write_sample_rate(jake_device* dev, int new_rate) {
 			new_rate = minpos;
 		}
 	}
-
 	return jake_write_main(dev, JAKE_REG_CONFIG1, new_rate);
 }
