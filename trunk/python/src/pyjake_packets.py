@@ -29,16 +29,15 @@
 from pyjake_constants import *
 import thread, re, string, os, struct
 
-platform = "S60"
-if os.name == 'nt' or os.name == 'ce':
-	platform = "Windows"
+import platform
+ostype = platform.system()
+if ostype == 'Windows':
 	from time import sleep as ssleep
 	import pyjake_serial_pc as pyjake_serial
-elif os.name == 'posix':
-	platform = "Posix"
+elif ostype == 'Linux':
 	from time import sleep as ssleep
 	import pyjake_serial_pc as pyjake_serial
-elif os.name == 'e32':
+elif ostype == 'Symbian':
 	# AO callgate is used to make asynchronous callbacks in a particular thread
 	# this is necessary on Symbian because objects like sockets can't be shared between threads
 	# and so all reading/writing has to happen in the thread created in this module
@@ -149,7 +148,7 @@ class jake_device_private:
 				return JAKE_ERROR
 
 			debug("port opened OK")
-			if platform == "S60":
+			if ostype == "Symbian":
 				self.write_to_port = ao_callgate(self.port.write)
 			else:
 				self.write_to_port = self.port.write
