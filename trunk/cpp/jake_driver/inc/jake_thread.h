@@ -29,7 +29,7 @@ typedef struct {
 	HANDLE cmd_event;	// handle to an event object used to signal arrival of ACK/NAK packets
 } jake_thread;
 
-#define JAKE_THREAD_FUNC(x) LPTHREAD_START_ROUTINE x
+#define JAKE_THREAD_FUNC LPTHREAD_START_ROUTINE
 
 #else
 
@@ -42,7 +42,7 @@ typedef struct {
 	pthread_mutex_t cmd_mutex;	// pthread mutex (used with pthread condition object)
 } jake_thread;
 
-#define JAKE_THREAD_FUNC(x) void*(*func)(void*)
+typedef void*(*JAKE_THREAD_FUNC)(void*);
 
 #endif	/* _WIN32 */
 
@@ -51,7 +51,7 @@ typedef struct {
 #endif
 
 // initialisation
-jake_thread* jake_thread_init(jake_thread* st, void* cmdfunc, void* cmdparam, TCHAR* cmdeventname);
+jake_thread* jake_thread_init(jake_thread* st, JAKE_THREAD_FUNC cmdfunc, void* cmdparam, TCHAR* cmdeventname);
 // waiting for event
 BOOL jake_thread_wait(jake_thread* st, int secs, int ms, int thread);
 // signalling event

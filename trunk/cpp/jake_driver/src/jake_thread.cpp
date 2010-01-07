@@ -33,8 +33,6 @@ BOOL pthread_wait(jake_thread* dev, int secs, int ms, int thread) {
 	/* lock the mutex associated with the condition variable */
 	if(thread == CMD_THREAD)
 		pthread_mutex_lock(&(dev->cmd_mutex));
-	else
-		pthread_mutex_lock(&(dev->callback_mutex));
 
 	gettimeofday(&now, NULL);
 
@@ -55,8 +53,6 @@ BOOL pthread_wait(jake_thread* dev, int secs, int ms, int thread) {
 	while(!done) {
 		if(thread == CMD_THREAD)
 			retval = pthread_cond_timedwait(&(dev->cmd_event), &(dev->cmd_mutex), &timeout);
-		else
-			retval = pthread_cond_timedwait(&(dev->callback_event), &(dev->callback_mutex), &timeout);
 		switch(retval) {
 			case 0:
 				/* in this case the func returned due to the cond var being signalled */
@@ -73,16 +69,14 @@ BOOL pthread_wait(jake_thread* dev, int secs, int ms, int thread) {
 	}
 	if(thread == CMD_THREAD)
 		pthread_mutex_unlock(&(dev->cmd_mutex));
-	else
-		pthread_mutex_unlock(&(dev->callback_mutex));
 	return signalled;
 }
 #endif /* _WIN32 */
 
-jake_thread* jake_thread_init(jake_thread* st, void* cmdfunc, void* cmdparam, TCHAR* cmdeventname) {
+jake_thread* jake_thread_init(jake_thread* st, JAKE_THREAD_FUNC cmdfunc, void* cmdparam, TCHAR* cmdeventname) {
 	#ifdef _WIN32
 	st->cmd_event = CreateEvent(NULL, FALSE, FALSE, cmdeventname); 
-	st->rthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cmdfunc, cmdparam, 0, NULL);
+	st->rthread = CreateThread(NULL, 0, cmdfunc, cmdparam, 0, NULL);
 	SetThreadPriority(st->rthread, THREAD_PRIORITY_ABOVE_NORMAL);
 	#else
 	pthread_cond_init(&(st->cmd_event), NULL);

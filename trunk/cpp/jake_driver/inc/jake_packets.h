@@ -110,7 +110,7 @@ enum jake_connection_types {
 typedef struct {
 	int type;
 	int com_port;
-	__int64 btaddr;
+	JAKE_INT64 btaddr;
 	char btaddr_str[20];
 	char readfile[256];
 	char writefile[256];
@@ -133,7 +133,7 @@ typedef struct {
 	BOOL got_fwhwserial;		
 	long long data_recv;		// total data received
 	int wait_for_acks;
-	INT64 packets_received;
+	JAKE_INT64 packets_received;
 
 	unsigned long data_packets;
 	unsigned long ack_packets;
