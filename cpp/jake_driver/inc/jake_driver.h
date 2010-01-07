@@ -140,7 +140,7 @@ JAKE_API int jake_info_power_level(jake_device* dev);
 /**	Returns the total number of valid packets (of all types) received so far.
 *	@param dev pointer to a jake_device structure as returned by jake_init_device()
 *	@return number of packets received */
-JAKE_API INT64 jake_info_received_packets(jake_device* dev);
+JAKE_API JAKE_INT64 jake_info_received_packets(jake_device* dev);
 
 /**	Allows you to control whether the driver will wait for acknowledgement packets when sending
 *	commands to the JAKE. The default is to enable this functionality as it can be used to confirm

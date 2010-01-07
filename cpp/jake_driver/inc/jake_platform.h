@@ -54,7 +54,23 @@
 #include <wchar.h>
 
 #define jake_sleep(x) Sleep(x)
-#define INT64 __int64
+
+#define JAKE_CALLBACK __cdecl
+#define JAKE_STDCALL_CALLBACK __stdcall
+
+#define JAKE_INT64 __int64
+
+#ifdef __cplusplus
+extern "C" {
+	/**	This is a utility function for Windows systems (2K/XP and CE), which searches the registry
+	*	and retrieves the Bluetooth COM port numbers currently configured for outgoing connections.
+	*	@param ports should be the address of an uninitialised int pointer. If the function succeeds,
+	*	it will be updated to point to an array of at most 20 COM port numbers. 
+	*	@param portcount will be updated to contain the number of valid entries in the \a ports array.
+	*	@return 1 on success, -1 on error. */
+	JAKE_API int jake_scan_for_comm_ports(int** ports, int* portcount);
+}
+#endif
 
 #else
 
@@ -66,6 +82,7 @@
 #include <sys/time.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
+#include <ctype.h>
 
 #define DWORD unsigned int
 #define BOOL int
@@ -84,7 +101,7 @@
 #define JAKE_DBG //
 #endif
 
-#define long long
+#define JAKE_INT64 long long
 
 #endif /* _WIN32 */
 

@@ -175,12 +175,12 @@ int read_debug_bytes(jake_device_private* devpriv, char* buf, int bytes_to_read)
 	int attempts = 0;
 	int remaining_bytes = bytes_to_read;
 
-	Sleep(10);
+	jake_sleep(10);
 
 	while(1) {
 		JAKE_DBG("Reading %d bytes from position %d\n", remaining_bytes, ftell(devpriv->port.dbg_read));
 		if(devpriv->rthread_done) {
-			ExitThread(102);	
+			return 0;
 		}
 		bytes_read = fread(buf + (bytes_to_read - remaining_bytes), 1, remaining_bytes, devpriv->port.dbg_read);
 
@@ -191,7 +191,7 @@ int read_debug_bytes(jake_device_private* devpriv, char* buf, int bytes_to_read)
 		if(remaining_bytes != 0) {
 			/* check if the thread is exiting, and if so break out of the loop and return */
 			if(devpriv->rthread_done) {
-				ExitThread(103);	
+				return 0;
 			}
 
 			if(feof(devpriv->port.dbg_read)) {
@@ -232,7 +232,7 @@ int read_bytes(jake_device_private* dev, char* buf, int bytes_to_read) {
 		return 0;
 
 	if(dev->rthread_done)
-		ExitThread(101);
+		return 0;
 
 	int returned_bytes = 0;
 
@@ -538,7 +538,11 @@ void* jake_read_thread(void *shakedev) {
 
 			if(devpriv->rthread_done) {
 				devpriv->rthread_exit = TRUE;
-				ExitThread(100);
+				#ifdef _WIN32
+				return 1;
+				#else
+				pthread_exit((void*)1);
+				#endif
 			}
 
 			/* if packet remains unclassified, try to find the next header in the data stream */
@@ -578,7 +582,11 @@ void* jake_read_thread(void *shakedev) {
 
 		if(devpriv->rthread_done) {
 			devpriv->rthread_exit = TRUE;
-			ExitThread(105);
+			#ifdef _WIN32
+			return 1;
+			#else
+			pthread_exit((void*)1);
+			#endif
 		}
 		read_jake_packet(dev, devpriv, packet_type, packetbuf);
 
@@ -657,16 +665,16 @@ jake_device* jake_init_internal(jake_conn_data* scd) {
 			}
 		}
 	#else
-		if(init_type == JAKE_CONN_RFCOMM_I64 || init_type == JAKE_CONN_RFCOMM_STR) {
-			devpriv->port.comms_type = init_type;
-			if(init_type == JAKE_CONN_RFCOMM_I64) {
-				if(jake_open_rfcomm_i64(&(devpriv->port.rfcomm), btaddr) == NULL) {
+		if(scd->type == JAKE_CONN_RFCOMM_I64 || scd->type == JAKE_CONN_RFCOMM_STR) {
+			devpriv->port.comms_type = scd->type;
+			if(scd->type == JAKE_CONN_RFCOMM_I64) {
+				if(jake_open_rfcomm_i64(&(devpriv->port.rfcomm), scd->btaddr) == NULL) {
 					free(devpriv);
 					free(dev);
 					return NULL;
 				}
 			} else {
-				if(jake_open_rfcomm_str(&(devpriv->port.rfcomm), btaddr_str) == NULL) {
+				if(jake_open_rfcomm_str(&(devpriv->port.rfcomm), scd->btaddr_str) == NULL) {
 					free(devpriv);
 					free(dev);
 					return NULL;
@@ -697,7 +705,7 @@ jake_device* jake_init_internal(jake_conn_data* scd) {
 	devpriv->hwrev = devpriv->fwrev = 0.0;
 
 	// launch the thread used internally to read the data
-	jake_thread_init(&(devpriv->thread), (void*)jake_read_thread, (void*)dev, eventname);
+	jake_thread_init(&(devpriv->thread), jake_read_thread, (void*)dev, eventname);
 
 	return dev;
 }
@@ -788,15 +796,17 @@ JAKE_API int jake_free_device(jake_device* dev) {
 
 	DWORD status = 0;
 	devpriv->rthread_done = TRUE;
+	#ifdef XXX
 	while(GetExitCodeThread(&(devpriv->thread.rthread), &status)) {
 		if(status != STILL_ACTIVE) {
 			break;
 		}
 	}
+	#endif
 
 	jake_close(&(devpriv->port));
 	while(!devpriv->rthread_exit) {
-		Sleep(1);
+		jake_sleep(1);
 	}
 
 	free(devpriv);
@@ -833,7 +843,8 @@ int get_info(jake_device* dev) {
 	// XXX fix
 	devpriv->fwrev = fwmajor + (0.01 * fwminor);
 	devpriv->hwrev = hwmajor + (0.01 * hwminor);
-	_stprintf(devpriv->serial, "%04d", smajor + (sminor << 8));
+	sprintf(devpriv->serial, "%04d", smajor + (sminor << 8));
+	
 
 	return JAKE_SUCCESS;
 }
@@ -890,7 +901,7 @@ JAKE_API int jake_info_power_level(jake_device* dev) {
 	return devpriv->data.power & 0x7E; // mask off top bit
 }
 
-JAKE_API INT64 jake_info_received_packets(jake_device* dev) {
+JAKE_API JAKE_INT64 jake_info_received_packets(jake_device* dev) {
 	if(!dev) return -1;
 
 	jake_device_private* devpriv = (jake_device_private*)dev->priv;
