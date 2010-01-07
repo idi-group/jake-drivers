@@ -79,9 +79,6 @@ JAKE_API jake_device* jake_init_device(int com_port);
 JAKE_API jake_device* jake_init_device_rfcomm_i64(long long btaddr);
 JAKE_API jake_device* jake_init_device_rfcomm_str(char* btaddr);
 
-/**	For debugging use. Sets up the driver to read data from readfile and send any output to writefile. */
-JAKE_API jake_device* jake_init_device_DEBUGFILE(char* readfile, char* writefile);
-
 #else
 /*	(Linux only)
 *	Main initialisation function for setting up a link to a JAKE device.
@@ -93,6 +90,10 @@ JAKE_API jake_device* jake_init_device_DEBUGFILE(char* readfile, char* writefile
 JAKE_API jake_device* jake_init_device_rfcomm_i64(long long btaddr);
 JAKE_API jake_device* jake_init_device_rfcomm_str(char* btaddr);
 #endif
+
+/**	For debugging use. Sets up the driver to read data from readfile and send any output to writefile. */
+JAKE_API jake_device* jake_init_device_DEBUGFILE(char* readfile, char* writefile);
+
 
 /**
 *	Close the link with a JAKE device and free up any resources used in maintaining the connection.

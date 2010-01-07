@@ -20,10 +20,14 @@
 *	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef _WIN32
 #ifdef PYJAKE_COMPILE
 #define PYJAKE_EXPORT __declspec(dllexport)
 #else
 #define PYJAKE_EXPORT __declspec(dllimport)
+#endif
+#else
+#define PYJAKE_EXPORT
 #endif
 
 /*	Python wrapper for the JAKE driver 
