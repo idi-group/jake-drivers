@@ -23,7 +23,7 @@
 #undef JAKE_RFCOMM_SUPPORTED
 
 #ifdef _WIN32
-
+#include <winsock2.h>
 #endif
 
 // if on recent WinCE version, include proper headers and define macro to enable RFCOMM support
@@ -42,8 +42,8 @@
 #ifdef _WIN32
 	#ifndef _WIN32_WCE
 		#define JAKE_RFCOMM_SUPPORTED 1
-		#include <winsock2.h>
-		#include <ws2bth.h>
+		#include "initguid.h"
+		#include "ws2bth.h"
 	#endif
 #endif
 
