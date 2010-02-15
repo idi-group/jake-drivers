@@ -349,18 +349,13 @@ class jake_device:
 			return JAKE_ERROR
 		return pyjake.heading(self.__jakedev)
 
-	## 	Used to obtain the sequence number for the last set of data retrieved for a particular sensor
-	# 	For example, if you call acc() to retrieve a set of acc data, then call data_timestamp(JAKE_SENSOR_ACC)
-	# 	the return value will be the sequence number that was attached to the packet that provided the readings
-	# 	returned by the acc() function. 
+	## 	Used to obtain the sequence number for the last set of data retrieved 	
 	#
-	# 	@param sensor one of the JAKE_SENSOR_ constants
-	#
-	# 	@return JAKE_ERROR or the sequence number for the selected sensor
-	def data_timestamp(self, sensor):
+	# 	@return JAKE_ERROR or the sequence number 
+	def data_timestamp(self):
 		if not self.__connected:
 			return JAKE_ERROR
-		return pyjake.data_timestamp(self.__jakedev, sensor)
+		return pyjake.data_timestamp(self.__jakedev)
 
 	## 	Reads main register <address> and returns a 2-tuple: (success/error, value), where
 	# 	the first item in the tuple is JAKE_SUCCESS or JAKE_ERROR depending on the
