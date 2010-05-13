@@ -24,7 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import pyjake_packets, atexit, struct
+import pyjake_packets, atexit, struct, sys, os
 from pyjake_constants import *
 import math
 
@@ -63,7 +63,7 @@ class jake_device:
 			self.priv.close()
 			self.priv = None
 
-		self.priv = pyjake_packets.jake_device_private(addr)
+		self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_SERIAL_PORT, (addr,))
 
 		elapsed = 0
 		while not self.priv.synced and not self.priv.thread_done and elapsed < 10000:
@@ -72,6 +72,24 @@ class jake_device:
 
 		if not self.priv.synced or elapsed >= 10000:
 			raise jake_error("Failed to sync!")
+
+		return True
+
+	def connect_debug(self, inputfile, outputfile=None):
+		if self.priv != None:
+			self.priv.close()
+			self.priv = None
+
+		if not os.path.exists(inputfile):
+			raise jake_error("Specified file not found ('%s')"%inputfile)
+
+		inputfilefp = open(inputfile, "rb")
+		if not outputfile:
+			outputfilefp = sys.stdout
+		else:
+			outputfilefp = open(outputfile, "w")
+
+		self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_DEBUG_FILE, (inputfilefp, outputfilefp))
 
 		return True
 
