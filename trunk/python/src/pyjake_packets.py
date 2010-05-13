@@ -80,7 +80,7 @@ class jake_sensor_data:
 		self.power_source = 0
 
 class jake_device_private:
-	def __init__(self, bt_addr):
+	def __init__(self, conn_type, conn_data):
 		self.data = jake_sensor_data()
 
 		#self.dbgmode = "starting up"
@@ -108,7 +108,16 @@ class jake_device_private:
 		# and access it in another on the S60. The socket/port creation
 		# is all done in the thread that's spawned below.
 		self.s60 = True
-		self.bluetooth_addr = bt_addr
+
+		self.bluetooth_addr = None
+		self.file_objects = None
+
+		self.conn_type = conn_type
+		if conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
+			self.bluetooth_addr = conn_data[0]
+		elif conn_type == JAKE_CONN_TYPE_DEBUG_FILE:
+			self.inpfile, self.outfile = conn_data
+
 		self.port = None
 
 		# launch the thread
@@ -118,10 +127,20 @@ class jake_device_private:
 
 	# 	sends the given byte string through the internal port object
 	def write(self, bytes):
-		self.port.write(bytes)
+		if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
+			self.port.write(bytes)
+		else:
+			self.outfile.write(bytes)
 
 	def read(self, bytes_to_read):
-		allbytes = self.port.read(bytes_to_read)
+		if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
+			allbytes = self.port.read(bytes_to_read)
+		else:
+			allbytes = self.inpfile.read(bytes_to_read)
+			if len(allbytes) == 0:
+				# return to start of the file
+				self.inpfile.seek(0)
+				allbytes = self.inpfile.read(bytes_to_read)
 
 		if len(allbytes) > 0:
 			self.synced = True
@@ -184,9 +203,10 @@ class jake_device_private:
 	def run(self):
 		packet = ""
 		debug("setting up port")
-		if self.port_setup() == JAKE_ERROR:
-			debug("port setup failed")
-			return 
+		if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
+			if self.port_setup() == JAKE_ERROR:
+				debug("port setup failed")
+				return 
 
 		self.thread_done = False
 		debug("port setup done")
@@ -246,7 +266,8 @@ class jake_device_private:
 	
 			self.synced = True
 
-		self.port.close()
+		if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
+			self.port.close()
 		self.thread_exit = True
 		debug("closing port and exiting thread")
 

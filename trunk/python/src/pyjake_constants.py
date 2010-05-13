@@ -29,6 +29,9 @@ JAKE_SUCCESS = 1
 ## Global error code for JAKE functions.
 JAKE_ERROR = -1
 
+JAKE_CONN_TYPE_SERIAL_PORT = 0
+JAKE_CONN_TYPE_DEBUG_FILE = 1
+
 # registers (not complete list yet)
 JAKE_REG_CONFIG0 = 0x00
 JAKE_REG_CONFIG1 = 0x01
