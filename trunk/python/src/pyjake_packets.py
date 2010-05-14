@@ -116,7 +116,8 @@ class jake_device_private:
 		if conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
 			self.bluetooth_addr = conn_data[0]
 		elif conn_type == JAKE_CONN_TYPE_DEBUG_FILE:
-			self.inpfile, self.outfile = conn_data
+			self.inpfile, self.outfile, self.eof_callback = conn_data
+			self.want_eof_callbacks = True
 
 		self.port = None
 
@@ -138,9 +139,12 @@ class jake_device_private:
 		else:
 			allbytes = self.inpfile.read(bytes_to_read)
 			if len(allbytes) == 0:
-				# return to start of the file
-				self.inpfile.seek(0)
-				allbytes = self.inpfile.read(bytes_to_read)
+				result = False
+				if self.eof_callback and self.want_eof_callbacks:
+					result, self.want_eof_callbacks = self.eof_callback()
+				if not self.eof_callback or result:
+					self.inpfile.seek(0)
+					allbytes = self.inpfile.read(bytes_to_read)
 
 		if len(allbytes) > 0:
 			self.synced = True
@@ -226,12 +230,14 @@ class jake_device_private:
 			
 				debug("initial header: " + packet + "(" + str(len(packet)) + "), " + str(len(packet)) + " bytes")
 
-				if packet[0] == '$':
+				if len(packet) > 0 and packet[0] == '$':
 					packet_type = self.classify_packet_header(packet)
 					if packet_type != JAKE_BAD_PKT:
 						debug("ML) Type = %d" % packet_type)
 					else:
 						debug("ML) Type = -1")
+				else:
+					packet_type = JAKE_BAD_PKT
 					
 				if packet_type == JAKE_DATA:
 					self.data_packets += 1
@@ -246,11 +252,11 @@ class jake_device_private:
 					debug("in error handler")
 					read_count = 0
 					packet = [' ']
-					while read_count < 50 and (packet[0] != '$' and ord(packet[0]) != 0x7F):
+					while read_count < 50 and (len(packet) > 0 and packet[0] != '$' and ord(packet[0]) != 0x7F):
 						packet = self.read(1)
 						read_count += 1
 					
-					if packet[0] == '$':
+					if len(packet) > 0 and packet[0] == '$':
 						debug("error handler: first char is ASCII header")
 						packet += self.read(JAKE_HEADER_LEN - 1)
 						debug("error handler: new header is  "+ packet)

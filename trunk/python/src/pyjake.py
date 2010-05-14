@@ -75,7 +75,7 @@ class jake_device:
 
 		return True
 
-	def connect_debug(self, inputfile, outputfile=None):
+	def connect_debug(self, inputfile, eof_callback=None, outputfile=None):
 		if self.priv != None:
 			self.priv.close()
 			self.priv = None
@@ -89,7 +89,7 @@ class jake_device:
 		else:
 			outputfilefp = open(outputfile, "w")
 
-		self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_DEBUG_FILE, (inputfilefp, outputfilefp))
+		self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_DEBUG_FILE, (inputfilefp, outputfilefp, eof_callback))
 
 		return True
 
