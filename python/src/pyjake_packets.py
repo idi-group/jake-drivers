@@ -104,6 +104,8 @@ class jake_device_private:
 		self.serial = None
 		self.read_startup = False
 
+		self.data_callback = None
+
 		# workaround for not being able to create a socket in one thread
 		# and access it in another on the S60. The socket/port creation
 		# is all done in the thread that's spawned below.
@@ -322,6 +324,9 @@ class jake_device_private:
 			self.data.rssi, 										# 1x 8-bit signed
 			self.data.timestamp 									# 1x 16-bit unsigned
 		) = struct.unpack("4shhhhhhhBbxH", packet)
+
+		if self.data_callback:
+			self.data_callback((self.data.accx, self.data.accy, self.data.accz), (self.data.magx, self.data.magy, self.data.magz), self.data.heading, self.data.timestamp)
 
 def init_module():
 	pass
