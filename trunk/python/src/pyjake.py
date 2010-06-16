@@ -51,7 +51,6 @@ class jake_device:
 	instances = []
 
 	def __init__(self):
-			
 		self.handle = jake_device.jake_handle_count
 		jake_device.jake_handle_count += 1
 
@@ -64,6 +63,8 @@ class jake_device:
 			self.priv = None
 
 		self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_SERIAL_PORT, (addr,))
+		if self.data_callback:
+			self.priv.data_callback = self.data_callback
 
 		elapsed = 0
 		while not self.priv.synced and not self.priv.thread_done and elapsed < 10000:
@@ -90,6 +91,8 @@ class jake_device:
 			outputfilefp = open(outputfile, "w")
 
 		self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_DEBUG_FILE, (inputfilefp, outputfilefp, eof_callback))
+		if self.data_callback:
+			self.priv.data_callback = self.data_callback
 
 		return True
 
@@ -104,10 +107,12 @@ class jake_device:
 		except:
 			pass
 
-	def data_timestamp(self):
-		if sensor < JAKE_SENSOR_ACC or sensor > JAKE_SENSOR_ANA1:
-			return -1
+	def register_data_callback(self, cb):
+		self.data_callback = cb
+		if self.priv:
+			self.priv.data_callback = cb
 
+	def data_timestamp(self):
 		return self.priv.data.timestamp
 
 	# 	Returns x-axis accelerometer reading
