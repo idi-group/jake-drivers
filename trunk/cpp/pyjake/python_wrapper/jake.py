@@ -7,20 +7,15 @@ import sys, atexit, os
 ext_dir = os.path.join(sys.prefix, 'lib\\site-packages\\')
 sys.path.append(ext_dir)
 
-# only supports 2.4 and 2.5
-if sys.version[:3] == "2.4":
+major, minor = sys.version_info[0], sys.version_info[1]
+if major == 2 and minor == 4:
 	import pyjake
-elif sys.version[:3] == "2.5":
-	import imp
-	# check if on windows
-	if os.name != "posix":
-		import pyjake
-	else:
-		# TODO distutils for this too!
-		pyjake = imp.load_dynamic('pyjake', os.getcwd()+'/pyjake.so')
+elif major == 2 and minor >= 5:
+	import pyjake
 else:
-	print "Unsupported Python version: "  + sys.version[:3]
-	sys.exit(-1)
+	print "jake.py: Warning, unsupported Python version (%d.%d)"%(major, minor)
+	# attempt to import the pyshake module anyway
+	import pyjake
 
 # JAKE driver constants
 
