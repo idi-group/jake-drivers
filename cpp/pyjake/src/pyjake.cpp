@@ -290,7 +290,6 @@ static PyObject* pyjake_acc(PyObject* self, PyObject* args) {
 
 		jake_acc(devicelist[id], xyz);
 		obj = Py_BuildValue("[i, i, i]", xyz[0], xyz[1], xyz[2]);
-		Py_INCREF(obj);
 		return obj;
 	}
 
@@ -356,7 +355,6 @@ static PyObject* pyjake_mag(PyObject* self, PyObject* args) {
 
 		jake_mag(devicelist[id], xyz);
 		obj = Py_BuildValue("[i, i, i]", xyz[0], xyz[1], xyz[2]);
-		Py_INCREF(obj);
 		return obj;
 	}
 
@@ -395,7 +393,6 @@ static PyObject* pyjake_read_main(PyObject* self, PyObject* args) {
 		value = 0;
 		ret = jake_read_main(devicelist[id], reg, &value);
 		obj = Py_BuildValue("[i, i]", ret, value);
-		Py_INCREF(obj);
 		return obj;
 	}
 
@@ -441,7 +438,6 @@ static PyObject* pyjake_read_bluetooth(PyObject* self, PyObject* args) {
 		value = 0;
 		ret = jake_read_bluetooth(devicelist[id], reg, &value);
 		obj = Py_BuildValue("[i, i]", ret, value);
-		Py_INCREF(obj);
 		return obj;
 	}
 
@@ -502,7 +498,6 @@ static PyObject* pyjake_read_acc_offset(PyObject* self, PyObject* args) {
 		value = 0;
 		ret = jake_read_acc_offset(devicelist[id], xyz, range, &value);
 		obj = Py_BuildValue("[i, i]", ret, value);
-		Py_INCREF(obj);
 		return obj;
 	}
 
@@ -548,7 +543,6 @@ static PyObject* pyjake_read_acc_scale(PyObject* self, PyObject* args) {
 		value = 0;
 		ret = jake_read_acc_scale(devicelist[id], xyz, range, &value);
 		obj = Py_BuildValue("[i, i]", ret, value);
-		Py_INCREF(obj);
 		return obj;
 	}
 
@@ -594,7 +588,6 @@ static PyObject* pyjake_read_mag_scale(PyObject* self, PyObject* args) {
 		value = 0;
 		ret = jake_read_mag_scale(devicelist[id], xyz, &value);
 		obj = Py_BuildValue("[i, i]", ret, value);
-		Py_INCREF(obj);
 		return obj;
 	}
 
@@ -640,7 +633,6 @@ static PyObject* pyjake_read_mag_offset(PyObject* self, PyObject* args) {
 		value = 0;
 		ret = jake_read_mag_scale(devicelist[id], xyz, &value);
 		obj = Py_BuildValue("[i, i]", ret, value);
-		Py_INCREF(obj);
 		return obj;
 	}
 
@@ -686,7 +678,6 @@ static PyObject* pyjake_read_sample_rate(PyObject* self, PyObject* args) {
 		value = 0;
 		ret = jake_read_sample_rate(devicelist[id], &value);
 		obj = Py_BuildValue("[i, i]", ret, value);
-		Py_INCREF(obj);
 		return obj;
 	}
 
