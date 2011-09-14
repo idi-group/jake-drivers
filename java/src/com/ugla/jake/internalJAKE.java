@@ -1,4 +1,4 @@
-package JAKE;
+package com.ugla.jake;
 
 import java.io.IOException;
 import java.io.OutputStream;
