@@ -1,4 +1,4 @@
-package JAKE;
+package com.ugla.jake;
 
 public class JAKERegister {
 	

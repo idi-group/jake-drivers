@@ -1,4 +1,4 @@
-package JAKE;
+package com.ugla.jake;
 
 /* This class defines the public JAKE API */
 
