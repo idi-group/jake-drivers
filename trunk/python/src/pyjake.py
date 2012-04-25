@@ -55,6 +55,7 @@ class jake_device:
 		jake_device.jake_handle_count += 1
 
 		jake_device.instances.append(self)
+        self.data_callback = None
 		self.priv = None
 
 	def connect(self, addr):
