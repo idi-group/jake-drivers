@@ -4,12 +4,12 @@
 # Redistribution and use in source and binary forms, with or without modification, are
 # permitted provided that the following conditions are met:
 #
-#    * Redistributions of source code must retain the above copyright notice, this list of 
+#	* Redistributions of source code must retain the above copyright notice, this list of 
 #		conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice, this list
+#	* Redistributions in binary form must reproduce the above copyright notice, this list
 #		of conditions and the following disclaimer in the documentation and/or other
 #	 	materials provided with the distribution.
-#    * Neither the name of the University of Glasgow nor the names of its contributors 
+#	* Neither the name of the University of Glasgow nor the names of its contributors 
 #		may be used to endorse or promote products derived from this software without
 # 		specific prior written permission.
 #
@@ -27,12 +27,31 @@
 from pyjake import *
 import time
 
-jd = jake_device()
-jd.connect(5) # COM 6
+readpath = ''
+writepath = 'values_'
 
-jd.write_main(JAKE_REG_CONFIG1, JAKE_SAMPLE_RATE_30)
-for i in range(150):
-	time.sleep(0.01)
-	print jd.acc(), jd.mag(), jd.heading()
+filename = 'enguard_000-jake-0.txt'
+
+myfile = open(writepath + filename, 'w')
+
+jd = jake_device()
+done = False
+
+def jake_file_callback():
+	global done
+	done = True
+	return (False, False)
+
+def jake_data_callback(acc, mag, heading, timestamp):
+	print acc, mag, heading
+	myfile.write(str(jd.acc()) + " " + str(jd.mag()) + " " + str(jd.heading()) + "\n")
+
+jd = jake_device()
+jd.register_data_callback(jake_data_callback)
+jd.connect_debug((readpath + filename) , jake_file_callback)
+
+while not done:
+	time.sleep(0.1)
 
 jd.close()
+myfile.close()
