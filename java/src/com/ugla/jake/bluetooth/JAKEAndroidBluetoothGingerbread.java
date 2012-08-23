@@ -13,15 +13,13 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothDevice;
 
-public class JAKEAndroidBluetooth implements JAKESerialInterface {
+public class JakeAndroidBluetoothGingerbread implements JAKESerialInterface {
 
 	@Override
 	public boolean openConnection(String btaddress) {
 		BluetoothDevice btdev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(btaddress);
 		try {
-			btsock = btdev.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
-			// Honeycomb
-			//btsock = btdev.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+			btsock = btdev.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
