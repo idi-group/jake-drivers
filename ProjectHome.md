@@ -1,0 +1,11 @@
+**JAKE mini-sensor pack for mobile spatial interaction experiments**
+
+JAKE is a compact (dimensions just 31x18x10mm, weight is approx 7g) wireless device that provides acceleration, magnetic field and temperature sensing. Combined, these provide the information necessary to calculate compass heading. JAKE was designed to be a tool to aid researchers in HCI develop and experiment with new interaction techniques, such as gesture recognition and pointing interaction. The accelerometers are dual range types, the default range is +/-2g which is ideal for compassing applications. For applications that require sensing of large swing accelerations such as for certain forms of gesture recognition, the accelerometers can be configured in software for +/-6g measurement range. JAKE connects using a Bluetooth serial port profile and allows for up to seven JAKE’s to be connected to one host computer. This provides the possibility to track the movement of multiple limbs or nodes on a person simultaneously. The JAKE contains an internal li-polymer rechargeable battery that can be charged by connecting it to a host USB port. The battery life is typically about 8 hours when connected to a host over Bluetooth with both sensor sets enabled.
+
+![http://www.dcs.gla.ac.uk/~adr/image001.jpg](http://www.dcs.gla.ac.uk/~adr/image001.jpg) ![http://www.dcs.gla.ac.uk/~adr/image002.jpg](http://www.dcs.gla.ac.uk/~adr/image002.jpg)
+
+The JAKE sensor pack was completed and was tested and integrated into head-selection experiments, and for navigation demonstrations, and sensor pack drivers were updated. Experiments on use of the OI framework for context-sensitive filtering and fusion, and the analysis and debugging of magnetometer and accelerometer fusion processes were completed. Additional designs which allow the JAKE to be attached to watch straps were created for specific applications
+
+![http://www.dcs.gla.ac.uk/~adr/image003.jpg](http://www.dcs.gla.ac.uk/~adr/image003.jpg)
+
+The development of software and hardware was supported by several funded projects, including the EPSRC project _Negotiated Interaction_, the IST Programme of the European Commission, via the _Open Interface_ project and the SFC project _MATCH_.
