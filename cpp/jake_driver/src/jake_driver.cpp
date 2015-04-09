@@ -664,7 +664,8 @@ jake_device* jake_init_internal(jake_conn_data* scd) {
 				return NULL;
 			}
 		}
-	#else
+	#endif
+    #ifdef JAKE_RFCOMM_SUPPORTED
 		if(scd->type == JAKE_CONN_RFCOMM_I64 || scd->type == JAKE_CONN_RFCOMM_STR) {
 			devpriv->port.comms_type = scd->type;
 			if(scd->type == JAKE_CONN_RFCOMM_I64) {

@@ -76,12 +76,16 @@ extern "C" {
 
 /* Linux headers */
 #include <errno.h>
+#include <stdio.h>
+#include <string.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#ifndef __APPLE__
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
+#endif
 #include <ctype.h>
 
 #define DWORD unsigned int
@@ -98,7 +102,7 @@ extern "C" {
 #ifdef JAKE_DEBUGGING
 #define JAKE_DBG printf
 #else
-#define JAKE_DBG //
+#define JAKE_DBG(...) //
 #endif
 
 #define JAKE_INT64 long long

@@ -47,9 +47,10 @@
 	#endif
 #endif
 
-// if not on Windows, assume Linux and just define macro
 #ifndef _WIN32
-	#define JAKE_RFCOMM_SUPPORTED 1
+    #ifndef __APPLE__
+    	#define JAKE_RFCOMM_SUPPORTED 1
+    #endif
 #endif
 
 #endif

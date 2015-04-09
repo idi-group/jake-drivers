@@ -33,7 +33,7 @@
 #ifdef _WIN32
 #include "Python.h"
 #else
-#include <python2.5/Python.h>
+#include <Python.h>
 #endif
 #include "pyjake.h"
 
@@ -59,16 +59,15 @@ static PyObject* pyjake_cleanup(PyObject* self, PyObject* args) {
 PYJAKE_EXPORT void initpyjake(void) {
 	PyObject* mod = Py_InitModule("pyjake", pyjake_methods);
 	PyEval_InitThreads();
-	pyjake_ex = PyErr_NewException("pyjake.error", NULL, NULL);
+    char newExceptionName[] = "pyshake.error";
+	pyjake_ex = PyErr_NewException(&newExceptionName[0], NULL, NULL);
 	Py_INCREF(pyjake_ex);
 	PyModule_AddObject(mod, "PyjakeError", pyjake_ex);
 }
 
 // arguments: a COM port number or a BT addr 
 static PyObject* pyjake_init_device(PyObject* self, PyObject* args) {
-	int com_port, parsedok;
-	char* btaddr;
-	jake_device* dev;
+	jake_device* dev = NULL;
 
 	if(devicelist_count >= MAX_JAKES) {
 		PyRun_SimpleString("print 'Maximum number of JAKES reached!'");
@@ -76,6 +75,7 @@ static PyObject* pyjake_init_device(PyObject* self, PyObject* args) {
 	}
 
 	#ifdef _WIN32
+    int com_port, parsedok;
 	parsedok = PyArg_ParseTuple(args, "i", &com_port);
 	dev = jake_init_device(com_port);
 	#endif
