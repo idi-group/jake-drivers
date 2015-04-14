@@ -37,6 +37,13 @@ class jake_device:
         self.ack_timeout_ms = 500
     
     def connect(self, addr):
+        """
+        Connect to a JAKE over a Bluetooth serial connection. 
+
+        :param addr: any valid pyserial address, eg 'COM9:' on Windows or 
+            '/dev/tty.JAKEJK8SN0015-SPP' on OSX. 
+        :returns: True if the connection was created, False on error.
+        """
         if self.priv.port != None:
             self.priv.close()
 
@@ -49,17 +56,29 @@ class jake_device:
             elapsed += 50
 
         if not self.priv.synced or elapsed >= 10000:
-            print 'Failed here', self.priv.synced, elapsed
             return False
 
         return True
 
     def connect_debug(self, inputfile, eof_callback=None, outputfile=None):
+        """
+        Allows you to configure the the driver to read from a local file rather
+        than a serial port. Probably only useful for debugging. 
+
+        :param inputfile: filename of the local file containing JAKE data 
+            packets (in their original binary format).
+        :param eof_callback: optional callable to be called when the end of the
+            inputfile is reached (can be used to seek back to the start of the
+            file and continue parsing from there).
+        :param outputfile: optional filename for a local file where data packets
+            normally transmitted to the JAKE will be written.
+        :returns: True on success, False otherwise.
+        """
         if self.priv != None:
             self.priv.close()
 
         if not os.path.exists(inputfile):
-            raise Exception("Specified file not found ('%s')"%inputfile)
+            return False
 
         inputfilefp = open(inputfile, "rb")
         if not outputfile:
@@ -72,58 +91,124 @@ class jake_device:
         return True
 
     def close(self):
+        """
+        Close any active connection.
+        """
         if self.priv:
             self.priv.close()
 
     def register_data_callback(self, cb):
+        """
+        Registers a callable to be called when each new data packet arrives from
+        the JAKE. 
+        
+        :param cb: function to be called for each new data packet. It should 
+            expect 4 parameters:
+            - accelerometer data [x, y, z] (list)
+            - magnetometer data [x, y, z] (list)
+            - heading (int)
+            - timestamp (int)
+        """
         self.priv.data_callback = cb
 
     def data_timestamp(self):
+        """
+        Provides the sequence number from the last received data packet.
+
+        :returns: the sequence number (internally a 16-bit int)
+        """
         return self.priv.data.timestamp
 
-    #   Returns x-axis accelerometer reading
     def accx(self):
+        """
+        Latest x-axis accelerometer reading.
+
+        :returns: x-axis accelerometer reading
+        """
         return self.priv.data.accx
 
-    #   Returns y-axis accelerometer reading
     def accy(self):
+        """
+        Latest y-axis accelerometer reading.
+
+        :returns: y-axis accelerometer reading
+        """
         return self.priv.data.accy
 
-    #   Returns z-axis accelerometer reading
     def accz(self):
+        """
+        Latest z-axis accelerometer reading.
+
+        :returns: z-axis accelerometer reading
+        """
         return self.priv.data.accz
 
-    #   Returns accelerometer readings in a list: [x, y, z]
     def acc(self):
+        """
+        Latest accelerometer readings.
+
+        :returns: accelerometer readings as a 3-element list ([x, y, z])
+        """
         return [self.priv.data.accx, self.priv.data.accy, self.priv.data.accz]
 
-    #   Returns x-axis mag reading
     def magx(self):
+        """
+        Latest x-axis magnetometer reading.
+
+        :returns: x-axis magnetometer reading
+        """
         return self.priv.data.magx
     
-    #   Returns y-axis mag reading
     def magy(self):
+        """
+        Latest y-axis magnetometer reading.
+
+        :returns: y-axis magnetometer reading
+        """
         return self.priv.data.magy
 
-    #   Returns z-axis mag reading
     def magz(self):
+        """
+        Latest z-axis magnetometer reading.
+
+        :returns: z-axis magnetometer reading
+        """
         return self.priv.data.magz
 
     #   Returns mag readings in a list: [x, y, z]
     def mag(self):
+        """
+        Latest magnetometer readings.
+
+        :returns: magnetometer reading as a 3-element list ([x, y, z])
+        """
         return [self.priv.data.magx, self.priv.data.magy, self.priv.data.magz]
 
     #   Returns heading
     def heading(self):
+        """
+        Latest compass heading sensor reading.
+
+        :returns: reading in tenths of a degree (0-3599)
+        """
         return self.priv.data.heading
 
     def info_firmware_revision(self):
+        """
+        TODO
+        """
         return self.priv.fwrev
 
     def info_hardware_revision(self):
+        """
+        TODO
+        """
         return self.priv.hwrev
 
     def info_serial_number(self):
+        """
+        TODO
+        """
         return self.priv.serial
 
     def info_rssi(self):
@@ -154,6 +239,15 @@ class jake_device:
         return self.write_main(JAKE_REG_CONFIG1, value)
 
     def read_sample_rate(self):
+        """
+        Reads the register containing the current sample rate.
+
+        :returns: a 2-tuple containing (result, value), where result is either
+            JAKE_ERROR or JAKE_SUCCESS. If result == JAKE_SUCCESS, value will
+            be set to the current value of the register. You can then check the
+            current sample rate by matching the value against the various
+            constants defined by the driver, eg JAKE_SAMPLE_RATE_60
+        """
         (result, value) = self.read_main(JAKE_REG_CONFIG1)
         if result == JAKE_ERROR:
             return (result, value)
@@ -161,8 +255,17 @@ class jake_device:
         return (result, value & 0x07)
     
     def write_sample_rate(self, newrate):
+        """
+        Updates the register controlling the current sensor sample rate. 
+
+        :param newrate: the new sample rate (integer). You can either supply
+            one of the predefined constants (eg JAKE_SAMPLE_RATE_60), or any
+            value between 0 and 120Hz. The JAKE only supports 6 predefined 
+            sample rates, so any other values will be mapped to the nearest
+            of the predefined set. 
+        :return: JAKE_SUCCESS or JAKE_ERROR
+        """
         if newrate < JAKE_SAMPLE_RATE_0 or newrate > JAKE_SAMPLE_RATE_120:
-            # work out best matching rate
             if newrate < 0:
                 newrate = JAKE_SAMPLE_RATE_0
             elif newrate > 120:
