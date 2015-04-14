@@ -16,4 +16,5 @@ setup(name='pyjake',
         author_email='andrew.ramsay@glasgow.ac.uk',
         url='http://github.com/andrewramsay/jake-drivers',
         py_modules = ['pyjake', 'pyjake_constants', 'pyjake_serial_pc', 'pyjake_packets'],
+        requires=['serial'],
 )
