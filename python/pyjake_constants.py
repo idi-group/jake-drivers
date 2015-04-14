@@ -5,13 +5,13 @@
 # permitted provided that the following conditions are met:
 #
 #    * Redistributions of source code must retain the above copyright notice, this list of 
-#           conditions and the following disclaimer.
+#       conditions and the following disclaimer.
 #    * Redistributions in binary form must reproduce the above copyright notice, this list
-#           of conditions and the following disclaimer in the documentation and/or other
-#           materials provided with the distribution.
+#       of conditions and the following disclaimer in the documentation and/or other
+#       materials provided with the distribution.
 #    * Neither the name of the University of Glasgow nor the names of its contributors 
-#           may be used to endorse or promote products derived from this software without
-#           specific prior written permission.
+#       may be used to endorse or promote products derived from this software without
+#       specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY 
 # EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -37,14 +37,14 @@ JAKE_REG_CONFIG0 = 0x00
 JAKE_REG_CONFIG1 = 0x01
 
 # bits in the first configuration register (power)
-JAKE_ACCEL                      = 0x01
-JAKE_MAG                    = 0x02
-JAKE_HEADING                = 0x04
+JAKE_ACCEL              = 0x01
+JAKE_MAG            = 0x02
+JAKE_HEADING        = 0x04
 JAKE_ACCEL_CALIBRATION      = 0x08
-JAKE_MAG_CALIBRATION        = 0x10
+JAKE_MAG_CALIBRATION    = 0x10
 JAKE_ACCEL_FILTER_ORDER16       = 0x20
 JAKE_MAG_FILTER_ORDER8      = 0x40
-JAKE_ACCEL_RANGE_6G         = 0x80
+JAKE_ACCEL_RANGE_6G     = 0x80
 
 JAKE_SAMPLE_RATE_0 = 0
 JAKE_SAMPLE_RATE_7_5 = 1
@@ -58,7 +58,7 @@ JAKE_OUTPUT_RATE_COUNT = 6
 JAKE_OUTPUT_RATES = [0, 7.5, 15, 30, 60, 120 ]
 
 #       Length of a JAKE packet header in bytes
-JAKE_HEADER_LEN         = 4
+JAKE_HEADER_LEN     = 4
 
 #       Packet types enumeration
 (
@@ -77,35 +77,35 @@ JAKE_HEADER_LEN         = 4
 JAKE_NUM_PACKET_TYPES = 7
 
 #       Indicates an unknown/badly formatted packet
-JAKE_BAD_PKT            = -1
+JAKE_BAD_PKT        = -1
 
 # variables
 
 jake_packet_headers =\
 [       
-        "$$$D", 
-                        
-        "$$R",                          
-        "$$r", 
-                            
-        "$$W",          
-        "$$w",
-                        
-        "$$$A",                 
-        "$$$N", 
+    "$$$D", 
+            
+    "$$R",              
+    "$$r", 
+                
+    "$$W",      
+    "$$w",
+            
+    "$$$A",         
+    "$$$N", 
 ]
 
 jake_packet_lengths =\
 [ 
-        24,
+    24,
 
-        6, 
-        6,
+    6, 
+    6,
 
-        6, 
-        6,
+    6, 
+    6,
 
-        24, 
-        24, 
+    24, 
+    24, 
 ]
 
