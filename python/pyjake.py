@@ -33,22 +33,23 @@ from pyjake_constants import *
 class jake_device:
 
     def __init__(self):
-        self.priv = None
+        self.priv = pyjake_packets.jake_device_private()
         self.ack_timeout_ms = 500
     
     def connect(self, addr):
-        if self.priv != None:
+        if self.priv.port != None:
             self.priv.close()
-            self.priv = None
 
-        self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_SERIAL_PORT, (addr,))
+        if not self.priv.connect(JAKE_CONN_TYPE_SERIAL_PORT, (addr,)):
+            return False
 
         elapsed = 0
-        while not self.priv.synced and not self.priv.thread_done and elapsed < 5000:
+        while not self.priv.synced and not self.priv.thread_done and elapsed < 10000:
             sleep(0.05)
             elapsed += 50
 
-        if not self.priv.synced or elapsed >= 5000:
+        if not self.priv.synced or elapsed >= 10000:
+            print 'Failed here', self.priv.synced, elapsed
             return False
 
         return True
@@ -56,7 +57,6 @@ class jake_device:
     def connect_debug(self, inputfile, eof_callback=None, outputfile=None):
         if self.priv != None:
             self.priv.close()
-            self.priv = None
 
         if not os.path.exists(inputfile):
             raise Exception("Specified file not found ('%s')"%inputfile)
@@ -67,7 +67,7 @@ class jake_device:
         else:
             outputfilefp = open(outputfile, "w")
 
-        self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_DEBUG_FILE, (inputfilefp, outputfilefp, eof_callback))
+        self.priv.connect(JAKE_CONN_TYPE_DEBUG_FILE, (inputfilefp, outputfilefp, eof_callback))
 
         return True
 

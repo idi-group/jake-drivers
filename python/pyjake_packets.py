@@ -32,6 +32,7 @@ from time import sleep
 import pyjake_serial_pc as pyjake_serial
 from pyjake_constants import *
     
+# only useful for debugging the driver
 debugfp = None
 debugging = False
 def debug(str, opennew=False):
@@ -45,11 +46,14 @@ def debug(str, opennew=False):
         f = open("debug.txt", "a")
 
     f.write(str + "\n")
-    #print str
+    print str
     f.close()
 
-# class which defines a variable for each item of data the JAKE can return, plus sequence numbers
 class jake_sensor_data:
+    """
+    This class represents a complete set of JAKE sensor data and associated
+    timestamps. 
+    """
     def __init__(self):
         self.accx, self.accy, self.accz = 0,0,0
         self.magx, self.magy, self.magz = 0,0,0
@@ -62,10 +66,9 @@ class jake_sensor_data:
         self.power_source = 0
 
 class jake_device_private:
-    def __init__(self, conn_type, conn_data):
+    def __init__(self):
         self.data = jake_sensor_data()
 
-        #self.dbgmode = "starting up"
         self.sendmsg = None
         self.lastack = False
         self.lastaddr, self.lastval = 0,0
@@ -73,6 +76,7 @@ class jake_device_private:
         self.thread_exit = False
         self.waiting_for_ack = False
         self.synced = False
+        self.conn_type = JAKE_CONN_TYPE_SERIAL_PORT
 
         self.data_packets = 0
         self.ack_packets = 0
@@ -80,19 +84,28 @@ class jake_device_private:
         self.error_packets = 0
         self.received_packets = 0
 
-        self.fwrev = None
-        self.hwrev = None
-        self.serial = None
+        # TODO parse this stuff
+        self.fwrev = -1
+        self.hwrev = -1
+        self.serial = 'missing'
         self.read_startup = False
+
+        self.port_lock = None
 
         self.data_callback = None
 
         self.bluetooth_addr = None
         self.file_objects = None
 
+        # struct formats for data and acknowledgement packets respectively
+        # almost identical except that the penultimate field is ignored
+        # in the data packet version (only used in ACKs)
         self.unpack_data = struct.Struct("4shhhhhhhBbxH")
         self.unpack_ack = struct.Struct("4shhhhhhhBbBH")
 
+        self.port = None
+
+    def connect(self, conn_type, conn_data):
         self.conn_type = conn_type
         if conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
             self.bluetooth_addr = conn_data[0]
@@ -100,10 +113,14 @@ class jake_device_private:
             self.inpfile, self.outfile, self.eof_callback = conn_data
             self.want_eof_callbacks = True
 
-        self.port = None
+        debug("setting up port")
+        if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
+            if self._open_port() == JAKE_ERROR:
+                debug("port setup failed")
+                return False
 
-        debug("starting thread", True)
-        thread.start_new_thread(self.run, ())
+        thread.start_new_thread(self._reader_thread, ())
+        return True
 
     #       sends the given byte string through the internal port object
     def write(self, bytes):
@@ -127,19 +144,37 @@ class jake_device_private:
 
         if len(allbytes) > 0:
             self.synced = True
+
         return allbytes
             
     #       closes the internal port object and terminates reader thread
     def close(self):
+        if self.thread_done:
+            return True
+
         self.thread_done = True
+        if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
+            if not self.port:
+                return True
+            
+            self.port.close()
+            self.port = None
+        else:
+            if self.inpfile: self.inpfile.close()
+            if self.outfile: self.outfile.close()
+    
+            self.infile = None
+            self.outfile = None
+
+        # avoids intermittent exceptions that seem to occur when the thread
+        # reading from the serial port hasn't completely finished by the time
+        # the main thread is exiting
+        if self.port_lock.acquire():
+            self.port_lock.release()
         
-        totaltime = 0.0
-        while totaltime < 1.0 and not self.thread_exit:
-            sleep(0.1)
-            totaltime += 0.1
         debug("thread exited event")
     
-    def port_setup(self):
+    def _open_port(self):
         try:    
             debug("creating port")
             self.port = pyjake_serial.serial_port(self.bluetooth_addr)
@@ -149,11 +184,13 @@ class jake_device_private:
                 return JAKE_ERROR
 
             debug("port opened OK")
-        except pyjake_serial.pyjake_serial_error:
-            debug(u'error; port creation failed')
+        except:
+            debug("error: port creation failed")
             self.thread_done = True
             return JAKE_ERROR
 
+        return JAKE_SUCCESS
+    
     def send_waiting_packet(self):
         self.write(self.sendmsg)
         self.sendmsg = None
@@ -163,7 +200,6 @@ class jake_device_private:
             self.jake_update_data( packet)
         else:
             self.jake_parse_ack_packet( packet)
-
 
     def read_jake_packet(self, packet_type, packet):
         bytes_left = jake_packet_lengths[packet_type] - JAKE_HEADER_LEN
@@ -176,78 +212,68 @@ class jake_device_private:
 
         return self.parse_jake_packet(packet_type, packet)
 
-    # this function runs in a thread and deals with reading/writing
-    # data from/to the serial port/bt socket.
-    def run(self):
-        packet = ""
-        debug("setting up port")
-        if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
-            if self.port_setup() == JAKE_ERROR:
-                debug("port setup failed")
-                return 
-
-        self.thread_done = False
-        debug("port setup done")
-        
-        debug("entering main loop")
-        while not self.thread_done:
-            debug("start of main loop")
-            valid_header = False
-            packet_type = -1
-        
-            if self.thread_done:
-                break
-
-            debug("starting check for header")
-            while not self.thread_done and not valid_header:
-                packet = self.read(JAKE_HEADER_LEN)
-            
-                debug("initial header: " + packet + "(" + str(len(packet)) + "), " + str(len(packet)) + " bytes")
-
-                if len(packet) > 0 and packet[0] == '$':
-                    packet_type = self.classify_packet_header(packet)
-                    debug("ML) Type = %d" % packet_type)
-                else:
-                    packet_type = JAKE_BAD_PKT
-                    
-                if packet_type == JAKE_DATA:
-                    self.data_packets += 1
-                elif packet_type == JAKE_ACK_ACK:
-                    self.lastack = True
-                    self.ack_packets += 1
-                elif packet_type == JAKE_ACK_NEG:
-                    self.lastack = False
-                    self.nak_packets += 1
-                elif packet_type == JAKE_BAD_PKT:
-                    self.error_packets += 1
-                
-                if packet_type == JAKE_BAD_PKT:
-                    debug("in error handler")
-                    read_count = 0
-                    packet = [' ']
-                    while read_count < 50 and (len(packet) > 0 and packet[0] != '$' and ord(packet[0]) != 0x7F):
-                        packet = self.read(1)
-                        read_count += 1
-                    
-                    if len(packet) > 0 and packet[0] == '$':
-                        debug("error handler: first char is ASCII header")
-                        packet += self.read(JAKE_HEADER_LEN - 1)
-                        debug("error handler: new header is  "+ packet)
-                        packet_type = self.classify_packet_header( packet)
-                        
-                if packet_type != JAKE_BAD_PKT:
-                    valid_header = True
-            
-            debug("Packet type = " + str(packet_type))
-            self.read_jake_packet(packet_type, packet)
+    def get_next_packet(self):
+        packet = self.read(JAKE_HEADER_LEN)
     
-            self.synced = True
+        debug("initial header: " + packet + "(" + str(len(packet)) + "), " + str(len(packet)) + " bytes")
+            
+        if len(packet) > 0 and packet[0] == '$':
+            packet_type = self.classify_packet_header(packet)
+            debug("ML) Type = %d" % packet_type)
+        else:
+            packet_type = JAKE_BAD_PKT
+            
+        if packet_type == JAKE_DATA:
+            self.data_packets += 1
+        elif packet_type == JAKE_ACK_ACK:
+            self.lastack = True
+            self.ack_packets += 1
+        elif packet_type == JAKE_ACK_NEG:
+            self.lastack = False
+            self.nak_packets += 1
+        elif packet_type == JAKE_BAD_PKT:
+            self.error_packets += 1
+        
+        if packet_type == JAKE_BAD_PKT:
+            debug("in error handler")
+            read_count = 0
+            packet = [' ']
+            while read_count < 50 and (len(packet) > 0 and packet[0] != '$' and ord(packet[0]) != 0x7F):
+                packet = self.read(1)
+                read_count += 1
+            
+            if len(packet) > 0 and packet[0] == '$':
+                debug("error handler: first char is ASCII header")
+                packet += self.read(JAKE_HEADER_LEN - 1)
+                debug("error handler: new header is  "+ packet)
+                packet_type = self.classify_packet_header( packet)
 
-        if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
-            self.port.close()
+        return (packet_type, packet)
+            
+    def _reader_thread(self):
+        self.thread_done = False
+
+        if self.port_lock and self.port_lock.locked():
+            self.port_lock.release()
+
+        debug("entering main loop")
+        self.port_lock = thread.allocate_lock()
+        with self.port_lock: # acquires lock
+            try:
+                while not self.thread_done:
+                    packet_type = JAKE_BAD_PKT
+        
+                    while not self.thread_done and packet_type == JAKE_BAD_PKT:
+                        (packet_type, packet) = self.get_next_packet()
+    
+                    self.read_jake_packet(packet_type, packet)
+
+                if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
+                    self.port.close()
+            except:
+                pass # TODO
+
         self.thread_exit = True
-        debug("closing port and exiting thread")
-
 
     def jake_parse_ack_packet(self, packet):
         # ack packets have an identical format to the data packets, but only
