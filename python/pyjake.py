@@ -24,40 +24,15 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import pyjake_packets, atexit, struct, sys, os
+import pyjake_packets, struct, sys, os
 from time import sleep
 
 from pyjake_constants import *
-import math
-
-# custom exception class for JAKE code
-class jake_error(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
-
-# this function is registered to be called on exit from a Python 
-# shell, and just calls the close method of any active jake_device
-# instances
-def cleanup():
-    for i in jake_device.instances:
-        if i != None:
-            i.close()
-
-atexit.register(cleanup)
 
 # an instance of this class represents a single JAKE device
 class jake_device:
-    jake_handle_count   = 0
-    instances = []
 
     def __init__(self):
-        self.handle = jake_device.jake_handle_count
-        jake_device.jake_handle_count += 1
-
-        jake_device.instances.append(self)
-        self.data_callback = None
         self.priv = None
         self.ack_timeout_ms = 500
     
@@ -67,16 +42,14 @@ class jake_device:
             self.priv = None
 
         self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_SERIAL_PORT, (addr,))
-        if self.data_callback:
-            self.priv.data_callback = self.data_callback
 
         elapsed = 0
-        while not self.priv.synced and not self.priv.thread_done and elapsed < 10000:
+        while not self.priv.synced and not self.priv.thread_done and elapsed < 5000:
             sleep(0.05)
             elapsed += 50
 
-        if not self.priv.synced or elapsed >= 10000:
-            raise jake_error("Failed to sync!")
+        if not self.priv.synced or elapsed >= 5000:
+            return False
 
         return True
 
@@ -86,7 +59,7 @@ class jake_device:
             self.priv = None
 
         if not os.path.exists(inputfile):
-            raise jake_error("Specified file not found ('%s')"%inputfile)
+            raise Exception("Specified file not found ('%s')"%inputfile)
 
         inputfilefp = open(inputfile, "rb")
         if not outputfile:
@@ -95,26 +68,15 @@ class jake_device:
             outputfilefp = open(outputfile, "w")
 
         self.priv = pyjake_packets.jake_device_private(JAKE_CONN_TYPE_DEBUG_FILE, (inputfilefp, outputfilefp, eof_callback))
-        if self.data_callback:
-            self.priv.data_callback = self.data_callback
 
         return True
 
-    def dbgmode(self):
-        return self.priv.dbgmode
-    
     def close(self):
         if self.priv:
             self.priv.close()
-        try:
-            jake_device.instances.remove(self)
-        except:
-            pass
 
     def register_data_callback(self, cb):
-        self.data_callback = cb
-        if self.priv:
-            self.priv.data_callback = cb
+        self.priv.data_callback = cb
 
     def data_timestamp(self):
         return self.priv.data.timestamp
@@ -261,11 +223,9 @@ class jake_device:
         self.priv.waiting_for_ack = True
     
         timeout = self.ack_timeout_ms
-        while self.priv.waiting_for_ack_signal:
-            sleep(0.001)
-            timeout -= 1
-            if timeout == 0:
-                break
+        while timeout > 0 and self.priv.waiting_for_ack_signal:
+            sleep(0.01)
+            timeout -= 10
         
         self.priv.waiting_for_ack = False
     
@@ -291,9 +251,9 @@ class jake_device:
         self.priv.waiting_for_ack = True
     
         timeout = self.ack_timeout_ms
-        while timeout != 0 and self.priv.waiting_for_ack_signal:
-            sleep(0.001)
-            timeout -= 1
+        while timeout > 0 and self.priv.waiting_for_ack_signal:
+            sleep(0.01)
+            timeout -= 10
         
         pyjake_packets.debug("+++ ACK WAIT OVER timeout = " + str(timeout))
         
