@@ -26,13 +26,6 @@
 
 # JAKE serial port wrapper class for systems that support pyserial
 
-class pyjake_serial_error(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
-
-# pyserial
 import serial
 
 class base_serial_port:
@@ -66,8 +59,7 @@ class serial_port(base_serial_port):
         # open port with parameters required for the JAKE
         try:
             self.port = serial.Serial(self.target, baudrate=115200, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
-        except:
-            print "exception opening port"
+        except Exception, e:
             return False
 
         self.connected = True
@@ -86,12 +78,16 @@ class serial_port(base_serial_port):
     def read(self, bytes_to_read):
         if not self.port:
             return ""
+
         bytes_read = 0
         data = ""
-        while bytes_read < bytes_to_read:
-            newdata = self.port.read(bytes_to_read - bytes_read)
-            bytes_read += len(newdata)
-            data += newdata
+        try:
+            while bytes_read < bytes_to_read:
+                newdata = self.port.read(bytes_to_read - bytes_read)
+                bytes_read += len(newdata)
+                data += newdata
+        except:
+            pass
         return data
 
     def write(self, bytes):
