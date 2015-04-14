@@ -1,0 +1,13 @@
+# list of file types that should be normalized on 
+# commiting (will have CRLF line endings converted to LF)
+*.c             text
+*.h             text
+*.cpp           text
+*.vcproj        text
+*.py            text
+*.md            text
+*.java          text
+*.cs            text
+*.csproj        text
+*.sh            text
+*.def           text
