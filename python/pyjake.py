@@ -212,30 +212,86 @@ class jake_device:
         return self.priv.serial
 
     def info_rssi(self):
+        """
+        Each data packet sent by the JAKE contains an RSSI field. This indicates
+        the current receive signal strength of the Bluetooth connection at the
+        JAKE end. This can be used to monitor the connection quality.
+
+        :returns: the signal strength as a signed value in units of dBm. The 
+            user manual states any value below roughly -90dBm would indicate
+            a very weak signal. 
+        """
         return self.priv.data.rssi
 
-    def info_power_source(self):
+    def info_external_power(self):
+        """
+        Indicates if the device is currently running off external (USB) power
+        or off the internal battery. This value is updated by each data packet
+        sent from the JAKE.
+
+        :returns: True if running on USB power, False otherwise
+        """
         return self.priv.data.power_source
 
     def info_power_level(self):
-        return self.priv.data.power_level
+        """
+        Gives the current battery level of the connected JAKE as a percentage.
 
-    def info_received_packets(self):
-        return self.priv.received_packets
+        :returns: the battery charge level from 0-99
+        """
+        return self.priv.data.power_level
 
     def wait_for_acks(self, wait):
         self.priv.waiting_for_ack = wait
 
     def read_configuration(self):
+        """
+        Shortcut function for reading config register 0 on the JAKE. This 
+        register controls various aspects of the 3 main sensors (power state,
+        calibration, filter order, acceleration range). See the user manual
+        for details.
+
+        :returns: a 2-tuple (result, value). Result will be either JAKE_ERROR
+            or JAKE_SUCCESS. If result is JAKE_SUCCESS, value will be the
+            current state of the register. 
+        """
         return self.read_main(JAKE_REG_CONFIG0)
 
     def write_configuration(self, value):
+        """
+        Shortcut function for writing config register 0 on the JAKE. This 
+        register controls various aspects of the 3 main sensors (power state,
+        calibration, filter order, acceleration range). See the user manual 
+        for details.
+
+        :param value: the value to write into the register, see the user manual
+            for information on which bits you should set. 
+        :returns: JAKE_SUCCESS or JAKE_ERROR
+        """
         return self.write_main(JAKE_REG_CONFIG0, value)
 
     def read_configuration2(self):
+        """
+        Shortcut function for reading config register 1 on the JAKE. This 
+        register is mostly used for controlling the output rate of the JAKE
+        data packets. 
+
+        :returns: a 2-tuple (result, value). Result will be either JAKE_ERROR
+            or JAKE_SUCCESS. If result is JAKE_SUCCESS, value will be the
+            current state of the register. 
+        """
         return self.read_main(JAKE_REG_CONFIG1)
 
     def write_configuration2(self, value):
+        """
+        Shortcut function for writing config register 1 on the JAKE. This
+        register is mostly used for controlling the output rate of the JAKE
+        data packets.
+
+        :param value: the value to write into the register, see the user manual
+            for information on which bits you should set.
+        :returns: JAKE_SUCCESS or JAKE_ERROR
+        """
         return self.write_main(JAKE_REG_CONFIG1, value)
 
     def read_sample_rate(self):
@@ -265,58 +321,55 @@ class jake_device:
             of the predefined set. 
         :return: JAKE_SUCCESS or JAKE_ERROR
         """
-        if newrate < JAKE_SAMPLE_RATE_0 or newrate > JAKE_SAMPLE_RATE_120:
+        if newrate < JAKE_OUTPUT_RATES[JAKE_SAMPLE_RATE_0] or newrate > JAKE_OUTPUT_RATES[JAKE_SAMPLE_RATE_120]:
+            # map any negative values to 0Hz and any overlarge values to 120Hz
             if newrate < 0:
                 newrate = JAKE_SAMPLE_RATE_0
             elif newrate > 120:
                 newrate = JAKE_SAMPLE_RATE_120
+        elif newrate >= JAKE_SAMPLE_RATE_0 and newrate <= JAKE_SAMPLE_RATE_120:
+            pass # assume a predefined constant has been passed in
         else:
-            min = 1e06
-            minpos = 0
-            for i in range(JAKE_OUTPUT_RATE_COUNT):
-                if abs(newrate - JAKE_OUTPUT_RATES[i]) < min:
-                    min = abs(newrate - JAKE_OUTPUT_RATES[i])
-                    minpos = i
-            newrate = minpos
+            # for other values, work out the best match among the supported 
+            # sample rates and use that
+            index = 0
+            while index < len(JAKE_OUTPUT_RATES) - 1:
+                if newrate < JAKE_OUTPUT_RATES[index]:
+                    break
+                index += 1
+
+            if JAKE_OUTPUT_RATES[index] - newrate > newrate - JAKE_OUTPUT_RATES[index - 1]:
+                newrate = index - 1
+            else:
+                newrate = index
 
         return self.write_main(JAKE_REG_CONFIG1, newrate)
 
-    def read_acc_offset(self):
-        pass
-
-    def write_acc_offset(self, value):
-        pass
-
-    def read_acc_scale(self):
-        pass
-
-    def write_acc_scale(self, value):
-        pass
-
-    def read_mag_scale(self):
-        pass
-
-    def write_mag_scale(self, value):
-        pass
-
-    def read_mag_offset(self):
-        pass
-
-    def write_mag_offset(self, value):
-        pass
-
     def get_ack_timeout_ms(self):
+        """
+        Get the current time in milliseconds the driver will wait for responses
+        to read/write commands.
+
+        :returns: the current timeout in milliseconds
+        """
         return self.ack_timeout_ms
 
     def set_ack_timeout_ms(self, new_timeout_ms):
+        """
+        Set the time in milliseconds the driver will wait for responses to 
+        read/write commands. Try increasing this if read/write commands seem
+        to return errors for no reason, especially if you're streaming a lot
+        of sensor data from the device.
+
+        :param new_timeout_ms: the new timeout in milliseconds
+        """
         self.ack_timeout_ms = new_timeout_ms
     
-    def read(self, address, hdr):
+    def _read(self, address, hdr):
         # packet: $$R or $$r, 1 byte address, 2 bytes unused and zeroed
         packet = struct.pack("3sBBB", hdr, address, 0, 0)
 
         if self.priv.waiting_for_ack:
-            pyjake_packets("read() already waiting for ack")
             return JAKE_ERROR
 
         self.priv.write(packet)
@@ -339,12 +392,11 @@ class jake_device:
 
         return (JAKE_SUCCESS, self.priv.lastval)
 
-    def write(self, address, value, hdr):
+    def _write(self, address, value, hdr):
         # packet: $$W or $$w, 1 bytes address, 1 byte value, 1 byte unused and zeroed
         packet = struct.pack("3sBBB", hdr, address, value, 0)
 
         if self.priv.waiting_for_ack:
-            pyjake_packets("write() already waiting for ack")
             return JAKE_ERROR
     
         self.priv.write(packet)
@@ -358,11 +410,8 @@ class jake_device:
             sleep(0.01)
             timeout -= 10
         
-        pyjake_packets.debug("+++ ACK WAIT OVER timeout = " + str(timeout))
-        
         self.priv.waiting_for_ack = False
         if not self.priv.lastack:
-            pyjake_packets.debug("write() failed to get ACK")
             return JAKE_ERROR
     
         self.lastack = False
@@ -370,15 +419,49 @@ class jake_device:
         return JAKE_SUCCESS
     
     def read_main(self, address):
-        return self.read(address, "$$R")
+        """
+        Reads one of the main JAKE configuration registers. 
+
+        :param address: the address of the register to read from (see the user
+            manual for details).
+        :returns: a 2-tuple (result, value). result will be either JAKE_ERROR 
+            or JAKE_SUCCESS. If result is JAKE_SUCCESS then value will give the
+            current value of the register.
+        """
+        return self._read(address, "$$R")
 
     def write_main(self, address, value):
-        return self.write(address, value, "$$W")
+        """
+        Writes to one of the main JAKE configuration registers.
+
+        :param address: the address of the register to write into (see the user
+            manual for details).
+        :param value: the new value to be written to the register.
+        :returns: JAKE_SUCCESS or JAKE_ERROR
+        """
+        return self._write(address, value, "$$W")
 
     def read_bluetooth(self, address):
-        return self.read(address, "$$r")
+        """
+        Reads one of the JAKE Bluetooth microcontroller registers.
+
+        :param address: the address of the register to read from (see the user
+            manual for details).
+        :returns: a 2-tuple (result, value). result will be either JAKE_ERROR 
+            or JAKE_SUCCESS. If result is JAKE_SUCCESS then value will give the
+            current value of the register.
+        """
+        return self._read(address, "$$r")
 
     def write_bluetooth(self, address, value):
-        return self.write(address, value, "$$w")
+        """
+        Writes to one of the JAKE Bluetooth microcontroller registers.
+
+        :param address: the address of the register to write into (see the user
+            manual for details).
+        :param value: the new value to be written to the register.
+        :returns: JAKE_SUCCESS or JAKE_ERROR
+        """
+        return self._write(address, value, "$$w")
 
 

@@ -82,7 +82,6 @@ class jake_device_private:
         self.ack_packets = 0
         self.nak_packets = 0
         self.error_packets = 0
-        self.received_packets = 0
 
         # TODO parse this stuff
         self.fwrev = -1
@@ -314,6 +313,11 @@ class jake_device_private:
             self.data.rssi,                                         # 1x 8-bit signed
             self.data.timestamp                                     # 1x 16-bit unsigned
         ) = self.unpack_data.unpack(packet)
+
+        # power source field: MSB is set when on USB power, other 7 bits
+        # give battery level (0-99)
+        self.data.power_source = (0x80 & self.data.power != 0)
+        self.data.power_level = 0x7F & self.data.power
 
         if self.data_callback:
             self.data_callback((self.data.accx, self.data.accy, self.data.accz), (self.data.magx, self.data.magy, self.data.magz), self.data.heading, self.data.timestamp)
