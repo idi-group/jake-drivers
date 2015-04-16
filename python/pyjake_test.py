@@ -59,7 +59,7 @@ if __name__ == "__main__":
     # supported sample rate and use that. 
     jd.write_sample_rate(60)
 
-    # display some data, method 1
+    # display some data by polling for new values
     for i in range(200):
         print jd.acc(), jd.mag(), jd.heading(), jd.data_timestamp()
         time.sleep(0.01)
@@ -68,5 +68,20 @@ if __name__ == "__main__":
     # data arriving there
     jd.register_data_callback(jake_data_callback)
     time.sleep(5)
+    jd.register_data_callback(None)
 
+    # check the current sample rate
+    (result, sample_rate) = jd.read_sample_rate()
+    if result == JAKE_SUCCESS:
+        print "Current sample rate: %dHz" % (JAKE_OUTPUT_RATES[sample_rate])
+    else:
+        print "Failed to get sample rate!"
+
+    # check power state
+    print "On USB power:", jd.info_external_power()
+    print "Battery %:", jd.info_power_level()
+
+    # Bluetooth signal strength at the receiver (JAKE) end of the connection
+    print "BT signal strength: %d dBM" % jd.info_rssi()
+    
     jd.close()
