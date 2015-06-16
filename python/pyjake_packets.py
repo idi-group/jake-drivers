@@ -145,8 +145,8 @@ class jake_device_private:
             self.synced = True
 
         return allbytes
-            
-    #       closes the internal port object and terminates reader thread
+
+    # closes the internal port object and terminates reader thread
     def close(self):
         if self.thread_done:
             return True
@@ -213,7 +213,7 @@ class jake_device_private:
 
     def get_next_packet(self):
         packet = self.read(JAKE_HEADER_LEN)
-    
+
         debug("initial header: " + packet + "(" + str(len(packet)) + "), " + str(len(packet)) + " bytes")
             
         if len(packet) > 0 and packet[0] == '$':
@@ -221,7 +221,7 @@ class jake_device_private:
             debug("ML) Type = %d" % packet_type)
         else:
             packet_type = JAKE_BAD_PKT
-            
+
         if packet_type == JAKE_DATA:
             self.data_packets += 1
         elif packet_type == JAKE_ACK_ACK:
@@ -232,7 +232,7 @@ class jake_device_private:
             self.nak_packets += 1
         elif packet_type == JAKE_BAD_PKT:
             self.error_packets += 1
-        
+
         if packet_type == JAKE_BAD_PKT:
             debug("in error handler")
             read_count = 0
@@ -240,7 +240,7 @@ class jake_device_private:
             while read_count < 50 and (len(packet) > 0 and packet[0] != '$' and ord(packet[0]) != 0x7F):
                 packet = self.read(1)
                 read_count += 1
-            
+
             if len(packet) > 0 and packet[0] == '$':
                 debug("error handler: first char is ASCII header")
                 packet += self.read(JAKE_HEADER_LEN - 1)
@@ -248,7 +248,7 @@ class jake_device_private:
                 packet_type = self.classify_packet_header( packet)
 
         return (packet_type, packet)
-            
+
     def _reader_thread(self):
         self.thread_done = False
 
@@ -261,10 +261,10 @@ class jake_device_private:
             try:
                 while not self.thread_done:
                     packet_type = JAKE_BAD_PKT
-        
+
                     while not self.thread_done and packet_type == JAKE_BAD_PKT:
                         (packet_type, packet) = self.get_next_packet()
-    
+
                     self.read_jake_packet(packet_type, packet)
 
                 if self.conn_type == JAKE_CONN_TYPE_SERIAL_PORT:
