@@ -29,13 +29,22 @@ from time import sleep
 
 from pyjake_constants import *
 
-# an instance of this class represents a single JAKE device
 class jake_device:
+    """An instance of this class represents a single JAKE device.
+    This naming will be removed, use JakeDevice instead.
+    """
 
     def __init__(self):
         self.priv = pyjake_packets.jake_device_private()
         self.ack_timeout_ms = 500
-    
+
+    @property
+    def connected(self):
+        """use this to know when the jake is connected
+        This is connected to the thread in priv
+        """
+        return not self.priv.thread_done
+
     def connect(self, addr):
         """
         Connect to a JAKE over a Bluetooth serial connection. 
@@ -464,4 +473,8 @@ class jake_device:
         """
         return self._write(address, value, "$$w")
 
-
+class JakeDevice(jake_device):
+    """Wrapper around jake_device class.
+    Respect the naming convention.
+    """
+    pass
