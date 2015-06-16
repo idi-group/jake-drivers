@@ -72,7 +72,11 @@ class jake_device_private:
         self.sendmsg = None
         self.lastack = False
         self.lastaddr, self.lastval = 0,0
-        self.thread_done = False
+
+        # used as a property to know if the jake is connected
+        # initialised to True. see jake.py
+        self.thread_done = True
+
         self.thread_exit = False
         self.waiting_for_ack = False
         self.synced = False
