@@ -1,6 +1,6 @@
 # JAKE Drivers
 
-This project contains drivers for the JAKE SK6 and SK7 sensor packs. For more information on the devices and their capabilities, [see the wiki](https://github.com/andrewramsay/jake-drivers/wiki/Overview).
+This project contains drivers for the JAKE sensor packs. For more information on the devices and their capabilities, [see the wiki](https://github.com/andrewramsay/jake-drivers/wiki/Overview).
 
 This repo contains multiple drivers. The most feature complete implementation is a C++ driver that can be compiled for Windows, OSX and Linux (32/64-bit). This driver also has bindings for Python, C# and Java, although in some cases functionality supported by the C++ code has not yet been exposed through these bindings.
 
