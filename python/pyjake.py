@@ -56,18 +56,7 @@ class jake_device:
         if self.priv.port != None:
             self.priv.close()
 
-        if not self.priv.connect(JAKE_CONN_TYPE_SERIAL_PORT, (addr,)):
-            return False
-
-        elapsed = 0
-        while not self.priv.synced and not self.priv.thread_done and elapsed < 10000:
-            sleep(0.05)
-            elapsed += 50
-
-        if not self.priv.synced or elapsed >= 10000:
-            return False
-
-        return True
+        return self.priv.connect(JAKE_CONN_TYPE_SERIAL_PORT, (addr,))
 
     def connect_debug(self, inputfile, eof_callback=None, outputfile=None):
         """
