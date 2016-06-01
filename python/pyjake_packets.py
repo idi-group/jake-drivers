@@ -46,7 +46,7 @@ def debug(str, opennew=False):
         f = open("debug.txt", "a")
 
     f.write(str + "\n")
-    print str
+    print(str)
     f.close()
 
 class jake_sensor_data:
