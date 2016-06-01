@@ -28,15 +28,15 @@ import time, sys
 from pyjake import *
 
 def jake_data_callback(acc, mag, heading, timestamp):
-    print "Callback data:", acc, mag, heading, timestamp
+    print("Callback data:", acc, mag, heading, timestamp)
 
 if __name__ == "__main__":
 
     if len(sys.argv) != 2:
-        print "pyjake_test.py <device address>"
-        print ""
-        print "Examples:"
-        print "pyjake_test.py 4 (connect to COM port 5 on Windows (pyserial port numbers are 0-based))"
+        print("pyjake_test.py <device address>")
+        print("")
+        print("Examples:")
+        print("pyjake_test.py 4 (connect to COM port 5 on Windows (pyserial port numbers are 0-based))")
         sys.exit(-1)
 
     jd = jake_device()
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         param = sys.argv[1]
 
     if not jd.connect(param):
-        print "Failed to connect!"
+        print("Failed to connect!")
         sys.exit(-1)
 
     time.sleep(1)
@@ -60,8 +60,8 @@ if __name__ == "__main__":
     jd.write_sample_rate(60)
 
     # display some data by polling for new values
-    for i in range(200):
-        print jd.acc(), jd.mag(), jd.heading(), jd.data_timestamp()
+    for i in range(2000):
+        print(jd.acc(), jd.mag(), jd.heading(), jd.data_timestamp())
         time.sleep(0.01)
 
     # now register a callback for new data packets arriving and display
@@ -73,15 +73,15 @@ if __name__ == "__main__":
     # check the current sample rate
     (result, sample_rate) = jd.read_sample_rate()
     if result == JAKE_SUCCESS:
-        print "Current sample rate: %dHz" % (JAKE_OUTPUT_RATES[sample_rate])
+        print("Current sample rate: %dHz" % (JAKE_OUTPUT_RATES[sample_rate]))
     else:
-        print "Failed to get sample rate!"
+        print("Failed to get sample rate!")
 
     # check power state
-    print "On USB power:", jd.info_external_power()
-    print "Battery %:", jd.info_power_level()
+    print("On USB power:", jd.info_external_power())
+    print("Battery %:", jd.info_power_level())
 
     # Bluetooth signal strength at the receiver (JAKE) end of the connection
-    print "BT signal strength: %d dBM" % jd.info_rssi()
+    print("BT signal strength: %d dBM" % jd.info_rssi())
     
     jd.close()
