@@ -8,6 +8,10 @@ In addition, there are two separate implementations, one written in Python (with
 
 **NOTE**: If you install both the Python/C++ bindings and the pure Python implementation in the same Python environment you may encounter naming conflicts, as both include a module called "pyjake".
 
+## Simple installation
+
+If you only need the Python driver (only depends on pyserial and should work on all platforms that it supports), you can now install the package via pip: `pip install jake-drivers`
+
 ## Installation on Windows
 
 The easiest way to get up and running quickly on Windows is to use the Python implementation. Install pyserial, then run `python setup.py install` from the `jake-drivers/python` directory. 
